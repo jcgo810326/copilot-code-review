@@ -1,5 +1,128 @@
 """
-Announcements endpoints for the High School Management System API
+Announcements endpoints for the High School Management System API.
+
+This router exposes REST endpoints for creating and managing announcements
+that can be shown to students and staff.
+
+Base path
+=========
+- All routes in this module are prefixed with ``/announcements``.
+
+Endpoints
+=========
+
+1. GET /announcements
+---------------------
+- Description:
+  Return all *active* announcements. An announcement is considered active
+  when the current date is within its optional ``start_date`` (if present)
+  and required ``expiration_date``.
+- Authentication:
+  None (public endpoint).
+- Query parameters:
+  None.
+- Response:
+  A JSON array of announcement objects. Each object has:
+  - ``_id`` (string): Announcement identifier.
+  - ``message`` (string): Announcement text.
+  - ``start_date`` (string | null): Optional ISO date (YYYY-MM-DD) when
+    the announcement becomes visible.
+  - ``expiration_date`` (string): ISO date (YYYY-MM-DD) when the
+    announcement expires.
+  - ``created_by`` (string): ID of the teacher that created the announcement.
+  - ``created_at`` (string): ISO 8601 timestamp of creation.
+
+2. GET /announcements/all
+-------------------------
+- Description:
+  Return **all** announcements for use in the management interface
+  (including expired or not-yet-active announcements), sorted by
+  ``created_at`` descending (newest first).
+- Authentication:
+  Required. Caller must supply a valid teacher username.
+- Query parameters:
+  - ``username`` (string, required): The teacher's identifier. The value
+    must match a document ``{"_id": username}`` in ``teachers_collection``.
+- Errors:
+  - ``401 Authentication required`` if the username does not correspond
+    to an existing teacher.
+- Response:
+  A JSON array of announcement objects (same shape as in ``GET /announcements``).
+
+3. POST /announcements
+----------------------
+- Description:
+  Create a new announcement.
+- Authentication:
+  Required. Caller must supply a valid teacher username.
+- Body / form parameters:
+  - ``message`` (string, required): The announcement text. Must not be
+    empty or whitespace-only.
+  - ``expiration_date`` (string, required): ISO date (YYYY-MM-DD) when
+    the announcement expires. This field must be provided.
+  - ``username`` (string, required): The teacher's identifier. Must
+    correspond to a document in ``teachers_collection``.
+  - ``start_date`` (string | null, optional): ISO date (YYYY-MM-DD)
+    when the announcement should begin to be shown. If omitted or null,
+    the announcement is considered active immediately (subject to
+    ``expiration_date``).
+- Errors:
+  - ``401 Authentication required`` if the username is not a valid teacher.
+  - ``400 Expiration date is required`` if ``expiration_date`` is missing.
+  - ``400 Message is required`` if ``message`` is empty or whitespace.
+- Response:
+  The created announcement object, including its generated ``_id``.
+
+4. PUT /announcements/{announcement_id}
+--------------------------------------
+- Description:
+  Update an existing announcement identified by ``announcement_id``.
+- Authentication:
+  Required. Caller must supply a valid teacher username.
+- Path parameters:
+  - ``announcement_id`` (string, required): The identifier of the
+    announcement to update.
+- Body / form parameters:
+  - ``message`` (string, required): New announcement text.
+  - ``expiration_date`` (string, required): New expiration date
+    (ISO date, YYYY-MM-DD).
+  - ``username`` (string, required): The teacher's identifier. Must
+    correspond to a document in ``teachers_collection``.
+  - ``start_date`` (string | null, optional): New start date (ISO date,
+    YYYY-MM-DD) or null to remove a previously set start date.
+- Errors:
+  - ``401 Authentication required`` if the username is not a valid teacher.
+  - ``404 Announcement not found`` if the given ``announcement_id`` does
+    not exist.
+- Response:
+  The updated announcement object.
+
+5. DELETE /announcements/{announcement_id}
+------------------------------------------
+- Description:
+  Delete an existing announcement identified by ``announcement_id``.
+- Authentication:
+  Required. Caller must supply a valid teacher username.
+- Path parameters:
+  - ``announcement_id`` (string, required): The identifier of the
+    announcement to delete.
+- Query / body parameters:
+  - ``username`` (string, required): The teacher's identifier. Must
+    correspond to a document in ``teachers_collection``.
+- Errors:
+  - ``401 Authentication required`` if the username is not a valid teacher.
+  - ``404 Announcement not found`` if the given ``announcement_id`` does
+    not exist.
+- Response:
+  JSON object with a confirmation message (e.g., ``{"detail": "Deleted"}``).
+
+Security and data handling
+--------------------------
+- These endpoints rely on the ``teachers_collection`` to validate the
+  ``username`` parameter for management actions (list all, create, update,
+  delete).
+- Only minimal error details are returned to clients; errors should be
+  logged server-side as needed.
 """
 
 from fastapi import APIRouter, HTTPException
