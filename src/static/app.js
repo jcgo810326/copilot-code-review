@@ -334,34 +334,81 @@ document.addEventListener("DOMContentLoaded", () => {
       
       // Check if announcement is currently active
       const currentDate = new Date().toISOString().split('T')[0];
-      const isActive = (!announcement.start_date || announcement.start_date <= currentDate) && 
-                       announcement.expiration_date >= currentDate;
-      
-      const statusBadge = isActive 
-        ? '<span class="status-badge active">Active</span>' 
-        : '<span class="status-badge inactive">Inactive</span>';
-      
-      announcementCard.innerHTML = `
-        <div class="announcement-card-header">
-          ${statusBadge}
-          <div class="announcement-card-actions">
-            <button class="btn-icon edit-btn" data-id="${announcement._id}" title="Edit">
-              ✏️
-            </button>
-            <button class="btn-icon delete-btn" data-id="${announcement._id}" title="Delete">
-              🗑️
-            </button>
-          </div>
-        </div>
-        <div class="announcement-card-message">${announcement.message}</div>
-        <div class="announcement-card-dates">
-          <div><strong>Start:</strong> ${startDate === "No start date" ? startDate : new Date(startDate).toLocaleDateString()}</div>
-          <div><strong>Expires:</strong> ${new Date(expirationDate).toLocaleDateString()}</div>
-        </div>
-        <div class="announcement-card-meta">
-          Created by ${announcement.created_by}
-        </div>
-      `;
+      const isActive =
+        (!announcement.start_date || announcement.start_date <= currentDate) &&
+        announcement.expiration_date >= currentDate;
+
+      // Header
+      const headerDiv = document.createElement("div");
+      headerDiv.className = "announcement-card-header";
+
+      const statusBadgeEl = document.createElement("span");
+      statusBadgeEl.className = "status-badge " + (isActive ? "active" : "inactive");
+      statusBadgeEl.textContent = isActive ? "Active" : "Inactive";
+      headerDiv.appendChild(statusBadgeEl);
+
+      const actionsDiv = document.createElement("div");
+      actionsDiv.className = "announcement-card-actions";
+
+      const editButton = document.createElement("button");
+      editButton.className = "btn-icon edit-btn";
+      editButton.setAttribute("title", "Edit");
+      editButton.dataset.id = announcement._id;
+      editButton.textContent = "✏️";
+      actionsDiv.appendChild(editButton);
+
+      const deleteButton = document.createElement("button");
+      deleteButton.className = "btn-icon delete-btn";
+      deleteButton.setAttribute("title", "Delete");
+      deleteButton.dataset.id = announcement._id;
+      deleteButton.textContent = "🗑️";
+      actionsDiv.appendChild(deleteButton);
+
+      headerDiv.appendChild(actionsDiv);
+
+      // Message
+      const messageEl = document.createElement("div");
+      messageEl.className = "announcement-card-message";
+      messageEl.textContent = announcement.message || "";
+
+      // Dates
+      const datesDiv = document.createElement("div");
+      datesDiv.className = "announcement-card-dates";
+
+      const startDiv = document.createElement("div");
+      const startLabel = document.createElement("strong");
+      startLabel.textContent = "Start:";
+      startDiv.appendChild(startLabel);
+      startDiv.appendChild(document.createTextNode(" "));
+      const startValue = document.createElement("span");
+      startValue.textContent =
+        startDate === "No start date"
+          ? startDate
+          : new Date(startDate).toLocaleDateString();
+      startDiv.appendChild(startValue);
+
+      const expiresDiv = document.createElement("div");
+      const expiresLabel = document.createElement("strong");
+      expiresLabel.textContent = "Expires:";
+      expiresDiv.appendChild(expiresLabel);
+      expiresDiv.appendChild(document.createTextNode(" "));
+      const expiresValue = document.createElement("span");
+      expiresValue.textContent = new Date(expirationDate).toLocaleDateString();
+      expiresDiv.appendChild(expiresValue);
+
+      datesDiv.appendChild(startDiv);
+      datesDiv.appendChild(expiresDiv);
+
+      // Meta
+      const metaDiv = document.createElement("div");
+      metaDiv.className = "announcement-card-meta";
+      metaDiv.textContent = "Created by " + (announcement.created_by || "");
+
+      // Assemble card
+      announcementCard.appendChild(headerDiv);
+      announcementCard.appendChild(messageEl);
+      announcementCard.appendChild(datesDiv);
+      announcementCard.appendChild(metaDiv);
       
       announcementsList.appendChild(announcementCard);
     });
