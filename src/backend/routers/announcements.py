@@ -21,14 +21,19 @@ def get_active_announcements() -> List[Dict[str, Any]]:
     current_date = datetime.now().date().isoformat()
     
     # Find announcements that are active (current date is within start and expiration dates)
-    announcements = list(announcements_collection.find({
-        "$or": [
-            {"start_date": {"$exists": False}},
-            {"start_date": None},
-            {"start_date": {"$lte": current_date}}
-        ],
-        "expiration_date": {"$gte": current_date}
-    }))
+    announcements = list(
+        announcements_collection
+        .find({
+            "$or": [
+                {"start_date": {"$exists": False}},
+                {"start_date": None},
+                {"start_date": {"$lte": current_date}}
+            ],
+            "expiration_date": {"$gte": current_date}
+        })
+        # Ensure deterministic ordering so announcements[0] is stable on the frontend
+        .sort([("start_date", -1), ("created_at", -1)])
+    )
     
     # Convert ObjectId to string for JSON serialization
     for announcement in announcements:
