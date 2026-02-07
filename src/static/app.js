@@ -579,54 +579,42 @@ document.addEventListener("DOMContentLoaded", () => {
       let url;
       let method;
 
-      if (announcementId) {
-        // Update existing announcement
-        url = `/announcements/${announcementId}`;
-        method = "PUT";
-      } else {
-        // Create new announcement
-        url = "/announcements";
-        method = "POST";
-      }
-
-      const payload = {
-        message: message,
-        expiration_date: expirationDate,
-        username: currentUser.username,
-      };
-
-      if (startDate) {
-        payload.start_date = startDate;
-      }
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-      
-        url = `/announcements/${announcementId}?message=${encodeURIComponent(message)}&expiration_date=${encodeURIComponent(expirationDate)}&username=${encodeURIComponent(currentUser.username)}`;
-        if (startDate) {
-          url += `&start_date=${encodeURIComponent(startDate)}`;
+      try {
+        if (announcementId) {
+          // Update existing announcement
+          url = `/announcements/${announcementId}`;
+          method = "PUT";
+        } else {
+          // Create new announcement
+          url = "/announcements";
+          method = "POST";
         }
-        method = "PUT";
-      } else {
-        // Create new announcement
-        url = `/announcements?message=${encodeURIComponent(message)}&expiration_date=${encodeURIComponent(expirationDate)}&username=${encodeURIComponent(currentUser.username)}`;
+
+        const payload = {
+          message: message,
+          expiration_date: expirationDate,
+          username: currentUser.username,
+        };
+
         if (startDate) {
-          url += `&start_date=${encodeURIComponent(startDate)}`;
+          payload.start_date = startDate;
         }
-        method = "POST";
-      }
-      
-      const response = await fetch(url, { method });
-      
-      if (!response.ok) {
-        const data = await response.json();
-        showAnnouncementMessage(data.detail || "Failed to save announcement", "error");
-        return;
+
+        const response = await fetch(url, {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          showAnnouncementMessage(data.detail || "Failed to save announcement", "error");
+          return;
+        }
+      } catch (error) {
+        console.error("Error saving announcement:", error);
       }
       
       const successMessage = announcementId 
