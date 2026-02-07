@@ -135,14 +135,24 @@ def update_announcement(
         "updated_by": username,
         "updated_at": datetime.now().isoformat()
     }
+    unset_data: Dict[str, Any] = {}
 
-    # Only update start_date if it was explicitly provided
-    if start_date is not None:
+    # Handle start_date updates:
+    # - If explicitly provided as an empty string, clear the field.
+    # - If provided as a non-empty value, update it.
+    # - If None, do not modify the existing value.
+    if start_date == "":
+        unset_data["start_date"] = 1
+    elif start_date is not None:
         update_data["start_date"] = start_date
+
+    update_query: Dict[str, Any] = {"$set": update_data}
+    if unset_data:
+        update_query["$unset"] = unset_data
     
     result = announcements_collection.update_one(
         {"_id": obj_id},
-        {"$set": update_data}
+        update_query
     )
     
     if result.matched_count == 0:
